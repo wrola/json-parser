@@ -1,0 +1,6 @@
+{
+  "name": "Test",
+  "value": 123,
+  "invalid": "missing comma"
+  "another": "field"
+}

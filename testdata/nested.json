@@ -1,0 +1,33 @@
+{
+  "user": {
+    "id": 1,
+    "name": "Alice",
+    "profile": {
+      "bio": "Software developer",
+      "location": "San Francisco",
+      "skills": ["Go", "Python", "JavaScript"]
+    }
+  },
+  "posts": [
+    {
+      "id": 101,
+      "title": "Learning Go",
+      "tags": ["programming", "golang"],
+      "published": true
+    },
+    {
+      "id": 102,
+      "title": "JSON Parsing",
+      "tags": ["json", "data"],
+      "published": false
+    }
+  ],
+  "settings": {
+    "notifications": true,
+    "theme": "dark",
+    "privacy": {
+      "public": false,
+      "searchable": true
+    }
+  }
+}
