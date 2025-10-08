@@ -8,12 +8,23 @@ import (
 	"github.com/wojciech/json-parser/internal/parser"
 )
 
+const (
+	ColorReset   = "\033[0m"
+	ColorKey     = "\033[36m" // Cyan for keys
+	ColorString  = "\033[32m" // Green for strings
+	ColorNumber  = "\033[33m" // Yellow for numbers
+	ColorBoolean = "\033[35m" // Magenta for booleans
+	ColorNull    = "\033[90m" // Gray for null
+	ColorBrace   = "\033[37m" // White for braces/brackets
+)
+
 type Formatter struct {
 	Indent string
+	Color  bool
 }
 
 func NewFormatter() *Formatter {
-	return &Formatter{Indent: "  "}
+	return &Formatter{Indent: "  ", Color: true}
 }
 
 func (f *Formatter) Format(value parser.JSONValue, writer io.Writer) error {
@@ -26,10 +37,13 @@ func (f *Formatter) formatWithIndent(value parser.JSONValue, writer io.Writer, d
 
 	switch typedValue := value.(type) {
 	case *parser.JSONObject:
-		fmt.Fprint(writer, "{\n")
+		f.printColored(writer, "{", ColorBrace)
+		fmt.Fprint(writer, "\n")
 		index := 0
 		for key, childValue := range typedValue.Data {
-			fmt.Fprintf(writer, "%s\"%s\": ", nextIndent, key)
+			fmt.Fprint(writer, nextIndent)
+			f.printColored(writer, fmt.Sprintf("\"%s\"", key), ColorKey)
+			fmt.Fprint(writer, ": ")
 			f.formatWithIndent(childValue, writer, depth+1)
 			if index < len(typedValue.Data)-1 {
 				fmt.Fprint(writer, ",")
@@ -37,10 +51,12 @@ func (f *Formatter) formatWithIndent(value parser.JSONValue, writer io.Writer, d
 			fmt.Fprint(writer, "\n")
 			index++
 		}
-		fmt.Fprintf(writer, "%s}", indent)
+		fmt.Fprintf(writer, "%s", indent)
+		f.printColored(writer, "}", ColorBrace)
 
 	case *parser.JSONArray:
-		fmt.Fprint(writer, "[\n")
+		f.printColored(writer, "[", ColorBrace)
+		fmt.Fprint(writer, "\n")
 		for index, element := range typedValue.Elements {
 			fmt.Fprint(writer, nextIndent)
 			f.formatWithIndent(element, writer, depth+1)
@@ -49,23 +65,32 @@ func (f *Formatter) formatWithIndent(value parser.JSONValue, writer io.Writer, d
 			}
 			fmt.Fprint(writer, "\n")
 		}
-		fmt.Fprintf(writer, "%s]", indent)
+		fmt.Fprintf(writer, "%s", indent)
+		f.printColored(writer, "]", ColorBrace)
 
 	case *parser.JSONString:
-		fmt.Fprintf(writer, "\"%s\"", typedValue.Value)
+		f.printColored(writer, fmt.Sprintf("\"%s\"", typedValue.Value), ColorString)
 
 	case *parser.JSONNumber:
-		fmt.Fprintf(writer, "%v", typedValue.Value)
+		f.printColored(writer, fmt.Sprintf("%v", typedValue.Value), ColorNumber)
 
 	case *parser.JSONBoolean:
-		fmt.Fprintf(writer, "%t", typedValue.Value)
+		f.printColored(writer, fmt.Sprintf("%t", typedValue.Value), ColorBoolean)
 
 	case *parser.JSONNull:
-		fmt.Fprint(writer, "null")
+		f.printColored(writer, "null", ColorNull)
 
 	default:
 		return fmt.Errorf("unknown JSON value type")
 	}
 
 	return nil
+}
+
+func (f *Formatter) printColored(writer io.Writer, text, color string) {
+	if f.Color {
+		fmt.Fprintf(writer, "%s%s%s", color, text, ColorReset)
+	} else {
+		fmt.Fprint(writer, text)
+	}
 }
